@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario de Nómina</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; padding: 20px; }
+        .container { max-width: 450px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h2 { color: #1a73e8; text-align: center; }
+        .group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        input[readonly] { background-color: #e9ecef; }
+        button { width: 100%; padding: 12px; background-color: #1a73e8; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+        button:hover { background-color: #1557b0; }
+        #status { text-align: center; font-weight: bold; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Registro de Nómina</h2>
+        <form id="nominaForm">
+            <div class="group">
+                <label>Cédula:</label>
+                <input type="text" id="cedula" required onblur="consultar()" placeholder="Ingrese cédula y salga del campo">
+            </div>
+            <div class="group">
+                <label>Nombres Completos:</label>
+                <input type="text" id="nombresCompletos" readonly>
+            </div>
+            <div class="group">
+                <label>Ciudad:</label>
+                <input type="text" id="ciudad" readonly>
+            </div>
+            <div class="group">
+                <label>Regional:</label>
+                <input type="text" id="regional" readonly>
+            </div>
+            <div class="group">
+                <label>Línea de Negocio:</label>
+                <select id="lineaNegocio" required>
+                    <option value="">-- Seleccione --</option>
+                    <option value="Operaciones">Operaciones</option>
+                    <option value="Administrativo">Administrativo</option>
+                    <option value="Comercial">Comercial</option>
+                </select>
+            </div>
+            <button type="button" onclick="guardar()">Guardar Registro</button>
+        </form>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        const WEB_APP_URL = "TU_URL_DE_APPS_SCRIPT_AQUI";
+
+        function consultar() {
+            let cedula = document.getElementById('cedula').value;
+            if (!cedula) return;
+            document.getElementById('status').innerText = "Consultando...";
+
+            fetch(WEB_APP_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "consultar", cedula: cedula })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.encontrado) {
+                    document.getElementById('nombresCompletos').value = data.nombresCompletos;
+                    document.getElementById('ciudad').value = data.ciudad;
+                    document.getElementById('regional').value = data.regional;
+                    document.getElementById('status').innerText = "";
+                } else {
+                    document.getElementById('status').innerText = "Cédula no encontrada.";
+                    document.getElementById('status').style.color = "red";
+                }
+            });
+        }
+
+        function guardar() {
+            let datos = {
+                action: "guardar",
+                cedula: document.getElementById('cedula').value,
+                nombresCompletos: document.getElementById('nombresCompletos').value,
+                ciudad: document.getElementById('ciudad').value,
+                regional: document.getElementById('regional').value,
+                lineaNegocio: document.getElementById('lineaNegocio').value
+            };
+
+            if (!datos.cedula || !datos.lineaNegocio) {
+                alert("Complete los campos obligatorios.");
+                return;
+            }
+
+            document.getElementById('status').innerText = "Guardando...";
+
+            fetch(WEB_APP_URL, {
+                method: "POST",
+                body: JSON.stringify(datos)
+            })
+            .then(res => res.json())
+            .then(res => {
+                document.getElementById('status').innerText = res.message;
+                document.getElementById('status').style.color = "green";
+                document.getElementById('nominaForm').reset();
+            });
+        }
+    </script>
+</body>
+</html>
